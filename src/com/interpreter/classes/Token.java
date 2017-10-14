@@ -11,14 +11,14 @@ package com.interpreter.classes;
  */
 public class Token {
     
-    public String text; 
-    public String type;
+    public final String text; 
+    public final TokenType type;
     
-    public Token(String text, String type){
+    public Token(String text, TokenType type) {
         this.text = text;
-        this.type = type;
+        this.type = type; 
     }
-    
+
     public String toString(){
         return "Text: " + text + ". Type: " + type + "."; 
     }

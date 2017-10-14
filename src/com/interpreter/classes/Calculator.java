@@ -5,27 +5,52 @@
  */
 package com.interpreter.classes;
 
+import java.util.List;
+
 /**
  *
  * @author Morales
  */
 public class Calculator {
     
-    public String exp = ""; //Expression
+    
     public static int pos = 0; //Current position
-    public static char Char; //Char being tested
+    public List<Token> tokens;
     
-    public Calculator(String exp){
-        this.exp = exp + " ";
-        nextChar();
+    public Calculator(List<Token> tokens){
+        this.tokens = tokens;
     }
     
-    public void nextChar(){ //== getChar
-        if (pos < exp.length()) 
-            Char = exp.charAt(pos);
-        pos++;
+    public Token getToken(int offset) {
+        if (pos + offset >= tokens.size()) {
+            return new Token("", TokenType.EOF); 
+        }
+        return tokens.get(pos + offset);
     }
     
+    public Token currentToken() {
+        return getToken(0); 
+    }
+    
+    public Token nextToken() {
+        return getToken(1); 
+    }
+    
+    public void consumeToken(int offset) {//= EatToken
+        pos = pos + offset;
+    }
+    
+    public Token MatchAndConsume(TokenType type) {
+        Token token = currentToken();
+        if (!currentToken().type.equals(type)) {
+            System.out.println("Error: got " + token.type +", but " + type +" expected.");
+            System.exit(0);
+        }
+        consumeToken(1);
+        return token; 
+    }
+    
+    /* tener en cuenta esto
     public double getNumber(){
         double number = 0;
         String temp_number = "";
@@ -56,30 +81,21 @@ public class Calculator {
         number = new Double(temp_number).doubleValue();
         return number;
     }
-    
-    public void MatchAndConsume(char chr) {
-        if (Char==chr) 
-            nextChar(); 
-        else{
-            System.out.println("Error: unrecognizable character.");
-            System.exit(0);
-        }
-    }
-    
+    */
     public double getTerm(){
         double res = getFactor();
-        while ((Char == '*') || (Char == '/') || (Char == '%') || (Char == '^')){
-            switch(Char) {
-            case '^':
+        while (currentToken().type.equals(TokenType.MULTIPLY) || currentToken().type.equals(TokenType.DIVIDE) || currentToken().type.equals(TokenType.EXPONENTIATION) || currentToken().type.equals(TokenType.MODULUS)){
+            switch(currentToken().type) {
+            case EXPONENTIATION:
                 res = Math.pow(res, exponentiation());
                 break;
-            case '*':
+            case MULTIPLY:
                 res = res * multiply();
+                break;
+            case DIVIDE:
+                res = res / divide(); 
                 break; 
-            case '/':
-                res = res / divide();
-                break; 
-            case '%':
+            case MODULUS:
                 res = res % modulus();
                 break;
             }
@@ -90,53 +106,55 @@ public class Calculator {
     
     public double getFactor(){
         double res = 0; 
-        if (Char == '(') {
-            MatchAndConsume('(');
+        if (currentToken().type.equals(TokenType.LEFT_PAREN)) {
+            MatchAndConsume(TokenType.LEFT_PAREN);
             res = Summation();
-            MatchAndConsume(')');
-        } else
-            res = getNumber();
+            MatchAndConsume(TokenType.RIGHT_PAREN);
+        } else if (currentToken().type.equals(TokenType.NUMBER)) {
+            res = new Double(currentToken().text).doubleValue();
+            MatchAndConsume(TokenType.NUMBER);
+        }
         return res;
     }
     
     public double add() {
-        MatchAndConsume('+');
+        MatchAndConsume(TokenType.ADD);
         return getTerm(); 
     }
     
     public double subtract() {
-        MatchAndConsume('-');
+        MatchAndConsume(TokenType.SUBTRACT);
         return getTerm(); 
     }
     
     public double multiply() {
-        MatchAndConsume('*');
+        MatchAndConsume(TokenType.MULTIPLY);
         return getFactor(); 
     }
     
     public double divide() {
-        MatchAndConsume('/');
+        MatchAndConsume(TokenType.DIVIDE);
         return getFactor(); 
     }
     
     public double modulus() {
-        MatchAndConsume('%');
+        MatchAndConsume(TokenType.MODULUS);
         return getFactor(); 
     }
     
     public double exponentiation() {
-        MatchAndConsume('^');
+        MatchAndConsume(TokenType.EXPONENTIATION);
         return getFactor(); 
     }
 
     public double Summation() {
         double res = getTerm();
-        while ((Char == '+') || (Char == '-')){
-            switch(Char){
-            case '+':
+        while (currentToken().type.equals(TokenType.ADD) || currentToken().type.equals(TokenType.SUBTRACT)){
+            switch(currentToken().type){
+            case ADD:
                 res = res + add();
                 break; 
-            case '-':
+            case SUBTRACT:
                 res = res - subtract(); 
                 break;
             }

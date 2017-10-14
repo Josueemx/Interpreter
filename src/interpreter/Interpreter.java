@@ -17,13 +17,12 @@ public class Interpreter {
     public int TokenPos = 0;
     
     public static void main(String[] args) {
-        String expression = "+3";
-        Calculator cal = new Calculator(expression);
-        System.out.println(cal.Summation());
-        /*String expression = "2.5 "; //aqui notese el espacio al final
+        String expression = "(600+3+2)*5";
         Tokenizer tokenizer = new Tokenizer(expression);
         List<Token> tokens = tokenizer.tokenize(expression);
-        tokenizer.Print(tokens);*/
+        Calculator cal = new Calculator(tokens);
+        System.out.println(cal.Summation());
+        tokenizer.Print(tokens);
 
     }
     

@@ -33,62 +33,85 @@ public class Tokenizer {
         return (chr == '+') || (chr == '-') || (chr == '*') || (chr == '/') || (chr == '(') || (chr == ')') || (chr == '^') || (chr == '%');
     }
     
-    public String getOperationType(char chr) {
-        String type = "UNKNOWN"; 
+    
+    public boolean isParen(char chr) {
+        return chr == '(' || chr == ')';
+    }
+    
+    public TokenType getParenType(char chr) {
+        TokenType type = TokenType.UNKNOWN; 
+        switch(chr){
+            case '(':
+                type = TokenType.LEFT_PAREN;
+                break; 
+            case ')':
+                type = TokenType.RIGHT_PAREN; 
+                break;
+        }
+        return type; 
+    }
+    
+    public TokenType getOperationType(char chr) {
+        TokenType type = TokenType.UNKNOWN;
         switch(chr){
             case '+':
-                type = "ADD";
+                type = TokenType.ADD;
                 break; 
             case '-':
-                type = "SUBTRACT"; 
+                type = TokenType.SUBTRACT; 
                 break;
             case '*':
-                type = "MULTIPLY";
+                type = TokenType.MULTIPLY;
                 break;
             case '/':
-                type = "DIVIDE";
+                type = TokenType.DIVIDE;
                 break; 
             case '^':
-                type = "EXPONENTIATION";
+                type = TokenType.EXPONENTIATION;
                 break;
             case '%':
-                type = "MODULUS";
+                type = TokenType.MODULUS;
                 break; 
             case '(':
-                type = "LEFT_PAREN"; 
+                type = TokenType.LEFT_PAREN; 
                 break;
             case ')':
-                type = "RIGHT_PAREN";
+                type = TokenType.RIGHT_PAREN;
                 break; 
         }
         return type; 
     }
     
     public List<Token> tokenize(String source) {
+        source = source + " ";//aqui se necesita?
         List<Token> tokens = new ArrayList<Token>(); 
         String token = "";
-        String state = "DEFAULT";
+        TokenizeState state = TokenizeState.DEFAULT;
         for (int i = 0; i < source.length(); i++) {
             char chr = source.charAt(i); 
             switch(state){
-                case "DEFAULT":
-                    String operation_type = getOperationType(chr); 
+                case DEFAULT:
+                    TokenType operation_type = getOperationType(chr); 
                     if (isOperation(chr)){
                         tokens.add(new Token(Character.toString(chr), operation_type)); 
                     }
+                    else if (isParen(chr)) {
+                        TokenType parenType = getParenType(chr);
+                        tokens.add(new Token(Character.toString(chr), parenType)); 
+                    }
                     else if (Character.isDigit(chr)) {
                         token += chr;
-                        state = "NUMBER";
+                        state = TokenizeState.NUMBER;
                     }
                     break;
-                case "NUMBER":
+                case NUMBER:
                     if (Character.isDigit(chr) || chr=='.' && Character.isDigit(source.charAt(i+1))) {//aqui puede tronar, tal vez no por el espacio
                         token += chr;
                     }
                     else{
-                        tokens.add(new Token(token, "NUMBER")); 
+                        tokens.add(new Token(token, TokenType.NUMBER)); 
                         token = "";
-                        state = "DEFAULT";
+                        state = TokenizeState.DEFAULT;
                         i--;
                     } 
                     break;
@@ -101,7 +124,7 @@ public class Tokenizer {
         int number_count = 0; 
         int operation_count = 0;
         for (Token token: tokens) {
-            if (token.type.equals("NUMBER")){
+            if (token.type.equals(TokenType.NUMBER)){
                 System.out.println("Number....: " + token.text);
                 number_count++;
             }
