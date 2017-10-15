@@ -15,13 +15,13 @@ import java.util.List;
 public class Interpreter {
     
     public static void main(String[] args) {
-        String expression = "((5+1)*100-2+3)";
+        String expression = "";
         Tokenizer tokenizer = new Tokenizer(expression);
         List<Token> tokens = tokenizer.tokenize(expression);
         Calculator cal = new Calculator(tokens);
         Node res = cal.Expression();
         System.out.println(res.eval());
-        tokenizer.Print(tokens);
+        tokenizer.printTokens(tokens);
     }
     
 }

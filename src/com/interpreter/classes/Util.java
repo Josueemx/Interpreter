@@ -5,7 +5,7 @@
  */
 package com.interpreter.classes;
 
-
+import java.util.List;
 
 /**
  *
@@ -13,6 +13,32 @@ package com.interpreter.classes;
  */
 public class Util {
     
+    public void print(Object obj) {
+        System.out.print(obj);
+    }
     
+    public void println(Object obj) {
+        System.out.println(obj);
+    }
     
+    public void println() {
+        System.out.println();
+    }
+    
+    public void printTokens(List<Token> tokens) {
+        int number_count = 0; 
+        int operation_count = 0;
+        for (Token token: tokens) {
+            if (token.type.equals(TokenType.NUMBER)){
+                System.out.println("Number....: " + token.text);
+                number_count++;
+            }
+            else{
+                System.out.println("Operator..: " + token.type);
+                operation_count++;
+            } 
+        }
+         System.out.println("Number count: "+number_count+". Operation count: " + operation_count +".");
+    }
 }
+

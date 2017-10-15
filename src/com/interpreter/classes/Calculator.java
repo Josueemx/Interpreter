@@ -82,8 +82,18 @@ public class Calculator {
         return number;
     }
     */
+    
+    public Node getSignedFactor() {
+        if (currentToken().type == TokenType.SUBTRACT){
+            MatchAndConsume(TokenType.SUBTRACT); 
+            Node node = new NegOperationNode(getFactor()); 
+            return node;
+        }
+        return getFactor(); 
+    }
+    
     public Node getTerm(){
-        Node node = getFactor();
+        Node node = getSignedFactor();
         while (isMultiplicationOperation(currentToken().type)){
             switch(currentToken().type) {
                 case EXPONENTIATION:
@@ -226,8 +236,17 @@ public class Calculator {
         return relation(); 
     }
     
+    public Node notBoolFactor() {
+        if (currentToken().type == TokenType.NOT) {
+            MatchAndConsume(TokenType.NOT); 
+            Node node = BoolFactor(); 
+            return new NotOperationNode(node);
+        }
+        return BoolFactor(); 
+    }
+    
     public Node BoolTerm() {
-        Node node = BoolFactor();
+        Node node = notBoolFactor();
         while (currentToken().type.equals(TokenType.AND)){
                 MatchAndConsume(TokenType.AND);
                 node = new BinOperationNode(TokenType.AND, node, BoolFactor());

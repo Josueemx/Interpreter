@@ -160,7 +160,7 @@ public class Tokenizer {
         return tokens; 
     }
     
-    public void Print(List<Token> tokens) {
+    public void printTokens(List<Token> tokens) {
         int number_count = 0; 
         int operation_count = 0;
         for (Token token: tokens) {
