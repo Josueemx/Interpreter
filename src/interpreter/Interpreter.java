@@ -13,17 +13,15 @@ import java.util.List;
  * @author Morales
  */
 public class Interpreter {
-
-    public int TokenPos = 0;
     
     public static void main(String[] args) {
-        String expression = "(600+3+2)*5";
+        String expression = "((5+1)*100-2+3)";
         Tokenizer tokenizer = new Tokenizer(expression);
         List<Token> tokens = tokenizer.tokenize(expression);
         Calculator cal = new Calculator(tokens);
-        System.out.println(cal.Summation());
+        Node res = cal.Expression();
+        System.out.println(res.eval());
         tokenizer.Print(tokens);
-
     }
     
 }

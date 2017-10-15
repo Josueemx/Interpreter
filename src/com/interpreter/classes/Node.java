@@ -9,8 +9,7 @@ package com.interpreter.classes;
  *
  * @author Morales
  */
-public enum TokenType {
-    NUMBER, NEWLINE, OPERATOR, EOF, UNKNOWN, 
-    ADD, SUBTRACT, MULTIPLY, DIVIDE, MODULUS, EXPONENTIATION, LEFT_PAREN, RIGHT_PAREN, ASSIGNMENT,
-    EQUAL, NOTEQUAL, LESS, GREATER, LESSEQUAL, GREATEREQUAL, OR, AND, NOT
+public abstract class Node {
+    public Node() {}
+    public abstract Object eval(); 
 }

@@ -30,12 +30,16 @@ public class Tokenizer {
     }
     
     public boolean isOperation(char chr) {
-        return (chr == '+') || (chr == '-') || (chr == '*') || (chr == '/') || (chr == '(') || (chr == ')') || (chr == '^') || (chr == '%');
+        boolean addOperation = chr == '+' || chr == '-'; 
+        boolean multOperation = chr == '*' || chr == '/' || chr == '^' || chr == '%';
+        boolean compOperation = chr == '<' || chr == '>' || chr == '='; 
+        boolean logicOperation = chr == '!' || chr == '|' || chr == '&';
+        return addOperation || multOperation || compOperation || logicOperation; 
     }
     
-    
     public boolean isParen(char chr) {
-        return chr == '(' || chr == ')';
+        boolean parenOperation = chr == '(' || chr == ')';
+        return parenOperation;
     }
     
     public TokenType getParenType(char chr) {
@@ -51,7 +55,7 @@ public class Tokenizer {
         return type; 
     }
     
-    public TokenType getOperationType(char chr) {
+    public TokenType getOperationType(char chr, char nextchr) {
         TokenType type = TokenType.UNKNOWN;
         switch(chr){
             case '+':
@@ -72,11 +76,31 @@ public class Tokenizer {
             case '%':
                 type = TokenType.MODULUS;
                 break; 
-            case '(':
-                type = TokenType.LEFT_PAREN; 
+            case '<':
+                type = TokenType.LESS;
+                if (nextchr == '=') 
+                    type = TokenType.LESSEQUAL;
+                break; 
+            case '>':
+                type = TokenType.GREATER;
+                if (nextchr == '=') 
+                    type = TokenType.GREATEREQUAL; 
                 break;
-            case ')':
-                type = TokenType.RIGHT_PAREN;
+            case '=':
+                type = TokenType.ASSIGNMENT;
+                if (nextchr == '=') 
+                    type = TokenType.EQUAL;
+                break;
+            case '!':
+                type = TokenType.NOT;
+                if (nextchr == '=') 
+                    type = TokenType.NOTEQUAL;
+                break; 
+            case '|':
+                type = TokenType.OR; 
+                break;
+            case '&':
+                type = TokenType.AND;
                 break; 
         }
         return type; 
@@ -85,35 +109,51 @@ public class Tokenizer {
     public List<Token> tokenize(String source) {
         source = source + " ";//aqui se necesita?
         List<Token> tokens = new ArrayList<Token>(); 
-        String token = "";
+        Token token = null;
+        String tokenstr = "";
+        char firstOperator = '\0';
         TokenizeState state = TokenizeState.DEFAULT;
+        
         for (int i = 0; i < source.length(); i++) {
             char chr = source.charAt(i); 
             switch(state){
                 case DEFAULT:
-                    TokenType operation_type = getOperationType(chr); 
                     if (isOperation(chr)){
-                        tokens.add(new Token(Character.toString(chr), operation_type)); 
+                        firstOperator = chr;
+                        TokenType operation_Type = getOperationType(firstOperator, '\0'); 
+                        token = new Token(Character.toString(chr), operation_Type); 
+                        state = TokenizeState.OPERATOR;
                     }
                     else if (isParen(chr)) {
-                        TokenType parenType = getParenType(chr);
-                        tokens.add(new Token(Character.toString(chr), parenType)); 
+                        TokenType paren_type = getParenType(chr);
+                        tokens.add(new Token(Character.toString(chr), paren_type)); 
                     }
                     else if (Character.isDigit(chr)) {
-                        token += chr;
+                        tokenstr += chr;
                         state = TokenizeState.NUMBER;
                     }
                     break;
                 case NUMBER:
                     if (Character.isDigit(chr) || chr=='.' && Character.isDigit(source.charAt(i+1))) {//aqui puede tronar, tal vez no por el espacio
-                        token += chr;
+                        tokenstr += chr;
                     }
                     else{
-                        tokens.add(new Token(token, TokenType.NUMBER)); 
-                        token = "";
+                        tokens.add(new Token(tokenstr, TokenType.NUMBER)); 
+                        tokenstr = "";
                         state = TokenizeState.DEFAULT;
                         i--;
                     } 
+                    break;
+                case OPERATOR:
+                    if (isOperation(chr)){
+                        TokenType operation_type = getOperationType(firstOperator, chr); 
+                        token = new Token(Character.toString(firstOperator) + Character.toString(chr), operation_type);
+                    }
+                    else{
+                        tokens.add(token);
+                        state = TokenizeState.DEFAULT;
+                        i--;
+                    }
                     break;
             }
         }
