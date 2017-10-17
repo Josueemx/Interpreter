@@ -1,0 +1,5 @@
+start
+   println "poop" #this is a comment
+   wait 5000
+   println 2>=1
+end

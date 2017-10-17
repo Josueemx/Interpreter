@@ -13,19 +13,19 @@ import java.util.List;
  */
 public class Util {
     
-    public void print(Object obj) {
+    public static void print(Object obj) {
         System.out.print(obj);
     }
     
-    public void println(Object obj) {
+    public static void println(Object obj) {
         System.out.println(obj);
     }
     
-    public void println() {
+    public static void println() {
         System.out.println();
     }
     
-    public void printTokens(List<Token> tokens) {
+    public static void printTokens(List<Token> tokens) {
         int number_count = 0; 
         int operation_count = 0;
         for (Token token: tokens) {

@@ -5,44 +5,51 @@
  */
 package com.interpreter.classes;
 
+import java.util.LinkedList;
 import java.util.List;
 
 /**
  *
  * @author Morales
  */
-public class Calculator {
+public class Parser {
     
     
     public static int pos = 0; //Current position
     public List<Token> tokens; //all tokens
     
-    public Calculator(List<Token> tokens){
+    public Parser() {}
+    
+    public Parser(List<Token> tokens){
         this.tokens = tokens;
     }
     
-    public Token getToken(int offset) {
+    public List<Token> getTokens(){
+        return tokens; 
+    }
+    
+    public Token getToken(int offset){
         if (pos + offset >= tokens.size()){
             return new Token("", TokenType.EOF); 
         }
         return tokens.get(pos + offset);
     }
     
-    public Token currentToken() {
+    public Token currentToken(){
         return getToken(0); 
     }
     
-    public Token nextToken() {
+    public Token nextToken(){
         return getToken(1); 
     }
     
-    public void consumeToken(int offset) {//= EatToken
+    public void consumeToken(int offset){//= EatToken
         pos = pos + offset;
     }
     
-    public Token MatchAndConsume(TokenType type) {
+    public Token MatchAndConsume(TokenType type){
         Token token = currentToken();
-        if (!currentToken().type.equals(type)) {
+        if (!currentToken().type.equals(type)){
             System.out.println("Error: got " + token.type +", but " + type.name() +" expected.");
             System.exit(0);
         }
@@ -114,7 +121,7 @@ public class Calculator {
         return node; 
     }
     
-    public Node getFactor(){
+    public Node getFactor(){//aqui creo que es donde se sacan las variables
         Node res = null;
         if(currentToken().type.equals(TokenType.LEFT_PAREN)){
             MatchAndConsume(TokenType.LEFT_PAREN);
@@ -123,8 +130,11 @@ public class Calculator {
         } else if(isNumber()){
             Token token = MatchAndConsume(TokenType.NUMBER);
             res = new NumberNode(new Double(token.text).doubleValue());
+        } else if (isString()) {
+            Token token = MatchAndConsume(TokenType.STRING);
+            res = new StringNode(new String(token.text)); 
         } else{
-            System.out.println("Error: NUMBER or LEFT_PAREN expected or some shit: "+currentToken().type.name()); //aqui checar
+            System.out.println("Error: NUMBER or LEFT_PAREN expected or some shit: "+currentToken().type.name()); //aqui ir agregando conforme se agregan tipos de datos
             System.exit(0);
         }
         return res;
@@ -293,8 +303,40 @@ public class Calculator {
         return type == TokenType.OR || type == TokenType.AND; 
     }
     
-    public boolean isNumber() {
+    public boolean isNumber(){
         return currentToken().type == TokenType.NUMBER; 
     }
-
+    
+    public boolean isString() {
+        return currentToken().type == TokenType.STRING; 
+    }
+    
+    public Node Statement(){
+        Node node = null;
+        TokenType type = currentToken().type;
+        if (type == TokenType.PRINT) {
+            MatchAndConsume(TokenType.PRINT);
+            node = new PrintNode(Expression(), "sameline"); 
+        }
+        else if (type == TokenType.PRINTLN){
+            MatchAndConsume(TokenType.PRINTLN);
+            node = new PrintNode(Expression(), "newline"); }
+        else if (type == TokenType.WAIT){
+            MatchAndConsume(TokenType.WAIT);
+            node = new WaitNode(Expression()); 
+        } else {
+            Util.println("Error: unknown language construct: "+ currentToken().text);
+            System.exit(0);
+        }
+        return node; 
+    }
+    
+    public List getBlock(){
+        List<Node> statements = new LinkedList<Node>(); 
+        while(currentToken().type != TokenType.END){
+            statements.add(Statement());
+        }
+        MatchAndConsume(TokenType.END);
+        return statements; 
+    }
 }

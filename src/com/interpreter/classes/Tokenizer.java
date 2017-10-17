@@ -18,12 +18,14 @@ public class Tokenizer {
     public int pos = 0; 
     public char Char;
     
-    public Tokenizer(String exp) {
+    public Tokenizer(){}
+    
+    public Tokenizer(String exp){
         this.exp = exp+" ";
         nextChar();
     }
     
-    public void nextChar() {
+    public void nextChar(){
         if (pos < exp.length()) 
             Char = exp.charAt(pos);
         pos++;
@@ -106,8 +108,7 @@ public class Tokenizer {
         return type; 
     }
     
-    public List<Token> tokenize(String source) {
-        source = source + " ";//aqui se necesita?
+    public List<Token> tokenize(String source){
         List<Token> tokens = new ArrayList<Token>(); 
         Token token = null;
         String tokenstr = "";
@@ -123,14 +124,19 @@ public class Tokenizer {
                         TokenType operation_Type = getOperationType(firstOperator, '\0'); 
                         token = new Token(Character.toString(chr), operation_Type); 
                         state = TokenizeState.OPERATOR;
-                    }
-                    else if (isParen(chr)) {
+                    } else if (isParen(chr)){
                         TokenType paren_type = getParenType(chr);
                         tokens.add(new Token(Character.toString(chr), paren_type)); 
-                    }
-                    else if (Character.isDigit(chr)) {
+                    } else if (Character.isDigit(chr)){
                         tokenstr += chr;
                         state = TokenizeState.NUMBER;
+                    } else if (Character.isLetter(chr)){
+                        tokenstr += chr;
+                        state = TokenizeState.KEYWORD;
+                    } else if (chr == '"'){
+                        state = TokenizeState.STRING;
+                    } else if (chr == '#'){
+                        state = TokenizeState.COMMENT;
                     }
                     break;
                 case NUMBER:
@@ -155,9 +161,58 @@ public class Tokenizer {
                         i--;
                     }
                     break;
+                case KEYWORD:
+                    if (Character.isLetterOrDigit(chr)){
+                        tokenstr += chr;
+                    } 
+                    else{
+                        TokenType type = getStatementType(tokenstr); //aqui checar para obtener constante
+                        tokens.add(new Token(tokenstr, type)); 
+                        tokenstr = "";
+                        state = TokenizeState.DEFAULT;
+                        i--;
+                    } 
+                    break;
+                case STRING:
+                    if(chr == '"'){
+                        tokens.add(new Token(tokenstr, TokenType.STRING)); 
+                        tokenstr = "";
+                        state = TokenizeState.DEFAULT;
+                    }
+                    else 
+                        tokenstr += chr;
+                    break;
+                case COMMENT:
+                    if(chr == '\n')
+                        state = TokenizeState.DEFAULT;
+                    break;
             }
         }
         return tokens; 
+    }
+    
+    public TokenType getStatementType(String str) {
+        TokenType type = TokenType.UNKNOWN; 
+        switch(str){
+            case "start":
+                type = TokenType.START;//= SCRIPT
+                break;
+            case "end":
+                type = TokenType.END;
+                break;
+            case "print":
+                type = TokenType.PRINT;
+                break;
+            case "println":
+                type = TokenType.PRINTLN; 
+                break;
+            case "wait":
+                type = TokenType.WAIT;
+                break; 
+            default:
+                type = TokenType.KEYWORD;
+        }
+        return type;
     }
     
     public void printTokens(List<Token> tokens) {

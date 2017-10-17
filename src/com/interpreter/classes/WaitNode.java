@@ -13,13 +13,13 @@ public class WaitNode extends Node {
     
     public Node interval; 
     
-    public WaitNode() {}
+    public WaitNode(){}
     
-    public WaitNode(Node interval) {
+    public WaitNode(Node interval){
         this.interval = interval; 
     }
     
-    public Object eval() {
+    public Object eval(){
         Double waitAmount = (Double) interval.eval(); 
         try{
             Thread.sleep((int)waitAmount.doubleValue());

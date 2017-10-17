@@ -21,7 +21,7 @@ public class PrintNode extends Node{
         this.type = type; 
     }
     
-    public Object eval() {
+    public Object eval(){
         Object write_e = expression.eval();
         if (type.equals("sameline")) 
             System.out.print(write_e);
