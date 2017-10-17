@@ -99,13 +99,26 @@ public class Parser {
         return getFactor(); 
     }
     
-    public Node getTerm(){
+    public Node getExponentiation(){
         Node node = getSignedFactor();
-        while (isMultiplicationOperation(currentToken().type)){
-            switch(currentToken().type) {
+        while(currentToken().type==TokenType.EXPONENTIATION){
+            switch(currentToken().type){
                 case EXPONENTIATION:
                     node = new BinOperationNode(TokenType.EXPONENTIATION, node, exponentiation());
                     break;
+            }
+        }
+        return node;
+    }
+    
+    public Node getTerm(){
+        //Node node = getSignedFactor();
+        Node node = getExponentiation();
+        while (isMultiplicationOperation(currentToken().type)){
+            switch(currentToken().type) {
+                /*case EXPONENTIATION:
+                    node = new BinOperationNode(TokenType.EXPONENTIATION, node, exponentiation());
+                    break;*/
                 case MULTIPLY:
                     node = new BinOperationNode(TokenType.MULTIPLY, node, multiply());
                     break;
@@ -152,22 +165,25 @@ public class Parser {
     
     public Node multiply() {
         MatchAndConsume(TokenType.MULTIPLY);
-        return getFactor(); 
+        //return getFactor(); 
+        return getExponentiation(); 
     }
     
     public Node divide() {
         MatchAndConsume(TokenType.DIVIDE);
-        return getFactor(); 
+        //return getFactor(); 
+        return getExponentiation(); 
     }
     
     public Node modulus() {
         MatchAndConsume(TokenType.MODULUS);
-        return getFactor(); 
+        //return getFactor(); 
+        return getExponentiation(); 
     }
     
     public Node exponentiation(){
         MatchAndConsume(TokenType.EXPONENTIATION);
-        return getFactor(); 
+        return getSignedFactor(); //aqui checar que sea o no getFactor
     }
 
     public Node Summation(){
@@ -282,7 +298,7 @@ public class Parser {
     }
     
     public boolean isMultiplicationOperation(TokenType type){
-        return type == TokenType.MULTIPLY || type == TokenType.DIVIDE || type == TokenType.MODULUS || type == TokenType.EXPONENTIATION; 
+        return type == TokenType.MULTIPLY || type == TokenType.DIVIDE || type == TokenType.MODULUS ;//|| type == TokenType.EXPONENTIATION 
     }
     
     public boolean isAddOperation(TokenType type){

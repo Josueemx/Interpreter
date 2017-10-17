@@ -124,19 +124,19 @@ public class Tokenizer {
                         TokenType operation_Type = getOperationType(firstOperator, '\0'); 
                         token = new Token(Character.toString(chr), operation_Type); 
                         state = TokenizeState.OPERATOR;
-                    } else if (isParen(chr)){
-                        TokenType paren_type = getParenType(chr);
-                        tokens.add(new Token(Character.toString(chr), paren_type)); 
                     } else if (Character.isDigit(chr)){
                         tokenstr += chr;
                         state = TokenizeState.NUMBER;
-                    } else if (Character.isLetter(chr)){
-                        tokenstr += chr;
-                        state = TokenizeState.KEYWORD;
+                    } else if (isParen(chr)){
+                        TokenType paren_type = getParenType(chr);
+                        tokens.add(new Token(Character.toString(chr), paren_type)); 
                     } else if (chr == '"'){
                         state = TokenizeState.STRING;
                     } else if (chr == '#'){
                         state = TokenizeState.COMMENT;
+                    } else if (Character.isLetter(chr)){
+                        tokenstr += chr;
+                        state = TokenizeState.KEYWORD;
                     }
                     break;
                 case NUMBER:
@@ -152,8 +152,14 @@ public class Tokenizer {
                     break;
                 case OPERATOR:
                     if (isOperation(chr)){
-                        TokenType operation_type = getOperationType(firstOperator, chr); 
-                        token = new Token(Character.toString(firstOperator) + Character.toString(chr), operation_type);
+                        if(firstOperator!='>'&&firstOperator!='<'&&firstOperator!='='&&firstOperator!='!'){//AQUI checar bien
+                            tokens.add(token);
+                            token = new Token(Character.toString(chr), getOperationType(chr, '\0'));
+                        }
+                        else{
+                            TokenType operation_type = getOperationType(firstOperator, chr); 
+                            token = new Token(Character.toString(firstOperator) + Character.toString(chr), operation_type);   
+                        }
                     }
                     else{
                         tokens.add(token);
