@@ -1,3 +1,4 @@
 start
-    println ===
+    pi = 3
+    println pi 
 end

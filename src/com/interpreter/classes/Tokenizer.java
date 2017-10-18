@@ -114,7 +114,6 @@ public class Tokenizer {
         String tokenstr = "";
         char firstOperator = '\0';
         TokenizeState state = TokenizeState.DEFAULT;
-        
         for (int i = 0; i < source.length(); i++) {
             char chr = source.charAt(i); 
             switch(state){
@@ -151,15 +150,11 @@ public class Tokenizer {
                     } 
                     break;
                 case OPERATOR:
-                    if (isOperation(chr)){
-                        if(firstOperator!='>'&&firstOperator!='<'&&firstOperator!='='&&firstOperator!='!'){//AQUI checar bien
-                            tokens.add(token);
-                            token = new Token(Character.toString(chr), getOperationType(chr, '\0'));
-                        }
-                        else{
-                            TokenType operation_type = getOperationType(firstOperator, chr); 
-                            token = new Token(Character.toString(firstOperator) + Character.toString(chr), operation_type);   
-                        }
+                    if (chr=='='&&(firstOperator=='<'||firstOperator=='>'||firstOperator=='!'||firstOperator=='=')){
+                        TokenType operation_type = getOperationType(firstOperator, chr); 
+                        token = new Token(Character.toString(firstOperator) + Character.toString(chr), operation_type);
+                        tokens.add(token);//aqui no estoy seguro
+                        state = TokenizeState.DEFAULT;//aqui no estoy seguro
                     }
                     else{
                         tokens.add(token);
@@ -206,6 +201,9 @@ public class Tokenizer {
             case "end":
                 type = TokenType.END;
                 break;
+            case "while":
+                type = TokenType.WHILE;
+            break;
             case "print":
                 type = TokenType.PRINT;
                 break;

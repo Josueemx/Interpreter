@@ -47,9 +47,8 @@ public class Interpreter {
         if(debug) 
             dumpTokens(parser);
         parser.MatchAndConsume(TokenType.START);
-        List<Node> script = parser.getBlock();
-        for (Node statement : script) 
-            statement.eval();
+        Node script = parser.getBlock();
+        script.eval();
     }
 
     public void dumpTokens(Parser parser){

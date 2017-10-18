@@ -5,8 +5,10 @@
  */
 package com.interpreter.classes;
 
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 
 /**
  *
@@ -17,11 +19,17 @@ public class Parser {
     
     public static int pos = 0; //Current position
     public List<Token> tokens; //all tokens
+    public Map symbol_table = new HashMap();
     
-    public Parser() {}
+    public Parser() {
+        symbol_table.put("pi", 3.141592653589793);
+        symbol_table.put("e", 2.718281828459045);
+    }
     
     public Parser(List<Token> tokens){
         this.tokens = tokens;
+        symbol_table.put("pi", 3.141592653589793);
+        symbol_table.put("e", 2.718281828459045);
     }
     
     public List<Token> getTokens(){
@@ -57,41 +65,17 @@ public class Parser {
         return token; 
     }
     
-    /* tener en cuenta esto
-    public double getNumber(){
-        double number = 0;
-        String temp_number = "";
-        if (!Character.isDigit(Char)){//aqui puede ser variable
-            System.out.println("Error: number expected."); 
-            System.exit(0);
+    /*public Node getSignedFactor() {aqui se quedo pendiente
+        Node node = getFactor();
+        while(currentToken().type == TokenType.SUBTRACT){
+            MatchAndConsume(TokenType.SUBTRACT); 
+            node = new NegOperationNode(node);
         }
-        while (Character.isDigit(Char)){
-            temp_number = temp_number + Char;
-            nextChar(); 
-        }
-        if(Char=='.' && Character.isDigit(exp.charAt(pos))){//aqui checar
-            temp_number = temp_number + Char;
-            nextChar();
-            if('.' == Char){//aqui este y siguiente if, factorizar? talvez esto no sea necesario (1)
-                System.out.println("Error: number expected."); 
-                System.exit(0);
-            }
-            while (Character.isDigit(Char)) {
-                temp_number = temp_number + Char;
-                nextChar(); 
-            }
-            if('.' == Char){//aqui este y siguiente if, factorizar? talvez esto no sea necesario (2)
-                System.out.println("Error: number expected."); 
-                System.exit(0);
-            }
-        }
-        number = new Double(temp_number).doubleValue();
-        return number;
-    }
-    */
+        return node; 
+    }*/
     
     public Node getSignedFactor() {
-        if (currentToken().type == TokenType.SUBTRACT){
+        if(currentToken().type == TokenType.SUBTRACT){
             MatchAndConsume(TokenType.SUBTRACT); 
             Node node = new NegOperationNode(getFactor()); 
             return node;
@@ -102,11 +86,7 @@ public class Parser {
     public Node getExponentiation(){
         Node node = getSignedFactor();
         while(currentToken().type==TokenType.EXPONENTIATION){
-            switch(currentToken().type){
-                case EXPONENTIATION:
-                    node = new BinOperationNode(TokenType.EXPONENTIATION, node, exponentiation());
-                    break;
-            }
+            node = new BinOperationNode(TokenType.EXPONENTIATION, node, exponentiation());           
         }
         return node;
     }
@@ -143,9 +123,11 @@ public class Parser {
         } else if(isNumber()){
             Token token = MatchAndConsume(TokenType.NUMBER);
             res = new NumberNode(new Double(token.text).doubleValue());
-        } else if (isString()) {
+        } else if (isString()){
             Token token = MatchAndConsume(TokenType.STRING);
             res = new StringNode(new String(token.text)); 
+        } else if (isKeyWord()){
+            res = ConsumeVariable();
         } else{
             System.out.println("Error: NUMBER or LEFT_PAREN expected or some shit: "+currentToken().type.name()); //aqui ir agregando conforme se agregan tipos de datos
             System.exit(0);
@@ -283,7 +265,7 @@ public class Parser {
     public Node BoolSummation() {
         Node node = BoolTerm();
         while (isLogicalOperation(currentToken().type)) {
-            switch(currentToken().type) {
+            switch(currentToken().type){
                 case OR:
                     MatchAndConsume(TokenType.OR); 
                     node = new BinOperationNode(TokenType.OR, node, BoolTerm());
@@ -327,17 +309,67 @@ public class Parser {
         return currentToken().type == TokenType.STRING; 
     }
     
+    public boolean isKeyWord() {
+        return currentToken().type == TokenType.KEYWORD; 
+    }
+    
+    public boolean isAssignment() {
+        TokenType type = currentToken().type; 
+        return type == TokenType.KEYWORD && nextToken().type == TokenType.ASSIGNMENT;
+    }
+    
+    public boolean isWhile() {
+        return currentToken().type == TokenType.WHILE; 
+    }
+    
+    public Node ConsumeVariable(){//= Variable
+        Token token = MatchAndConsume(TokenType.KEYWORD); 
+        Node node = new VariableNode(token.text, this);
+        return node; 
+    }
+    
+    public Object setVariable(String name, Object value) {
+        symbol_table.put(name, value);
+        return value; 
+    }
+    
+    public Object getVariable(String name){
+        Object value = (Object) symbol_table.get(name); 
+        if (value != null) 
+            return value;
+        return null; 
+    }
+    
+    public Node Assignment() {
+        Node node = null;
+        String name = MatchAndConsume(TokenType.KEYWORD).text; 
+        MatchAndConsume(TokenType.ASSIGNMENT);
+        Node value = Expression();
+        node = new AssignmentNode(name, value, this);
+        return node; 
+    }
+    
+    public Node While() {
+        MatchAndConsume(TokenType.WHILE);
+        Node condition = Expression();
+        Node body = getBlock();
+        return new WhileNode(condition, body); 
+    }
+
     public Node Statement(){
         Node node = null;
         TokenType type = currentToken().type;
-        if (type == TokenType.PRINT) {
+        if(isAssignment()){
+            node = Assignment();
+        } else if (isWhile()){
+            node = While();
+        } else if (type == TokenType.PRINT){
             MatchAndConsume(TokenType.PRINT);
             node = new PrintNode(Expression(), "sameline"); 
-        }
-        else if (type == TokenType.PRINTLN){
+        } else if (type == TokenType.PRINTLN){
             MatchAndConsume(TokenType.PRINTLN);
-            node = new PrintNode(Expression(), "newline"); }
-        else if (type == TokenType.WAIT){
+            node = new PrintNode(Expression(), "newline"); 
+        } else if (type == TokenType.WAIT){
             MatchAndConsume(TokenType.WAIT);
             node = new WaitNode(Expression()); 
         } else {
@@ -347,12 +379,12 @@ public class Parser {
         return node; 
     }
     
-    public List getBlock(){
+    public BlockNode getBlock(){
         List<Node> statements = new LinkedList<Node>(); 
         while(currentToken().type != TokenType.END){
             statements.add(Statement());
         }
         MatchAndConsume(TokenType.END);
-        return statements; 
+        return new BlockNode(statements);
     }
 }
