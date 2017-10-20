@@ -17,7 +17,6 @@ import java.util.Map;
  */
 public class Parser {
     
-    
     public static int pos = 0; //Current position
     public List<Token> tokens; //all tokens
     public Map symbol_table = new HashMap();
@@ -66,16 +65,19 @@ public class Parser {
         return token; 
     }
     
-    /*public Node getSignedFactor() {aqui se quedo pendiente
+    /*public Node getSignedFactor() {
         Node node = getFactor();
         while(currentToken().type == TokenType.SUBTRACT){
             MatchAndConsume(TokenType.SUBTRACT); 
-            node = new NegOperationNode(node);
+            if(node==null)
+                node  = new NegOperationNode(new NumberNode(1.0));
+            else
+                node = new NegOperationNode(node);
         }
         return node; 
     }*/
     
-    public Node getSignedFactor() {
+    public Node getSignedFactor(){
         if(currentToken().type == TokenType.SUBTRACT){
             MatchAndConsume(TokenType.SUBTRACT); 
             Node node = new NegOperationNode(getFactor()); 
@@ -93,13 +95,9 @@ public class Parser {
     }
     
     public Node getTerm(){
-        //Node node = getSignedFactor();
         Node node = getExponentiation();
         while (isMultiplicationOperation(currentToken().type)){
-            switch(currentToken().type) {
-                /*case EXPONENTIATION:
-                    node = new BinOperationNode(TokenType.EXPONENTIATION, node, exponentiation());
-                    break;*/
+            switch(currentToken().type){
                 case MULTIPLY:
                     node = new BinOperationNode(TokenType.MULTIPLY, node, multiply());
                     break;
@@ -110,12 +108,11 @@ public class Parser {
                     node = new BinOperationNode(TokenType.MODULUS, node, modulus());
                     break;
             }
-            
         }
         return node; 
     }
     
-    public Node getFactor(){//aqui creo que es donde se sacan las variables
+    public Node getFactor(){
         Node res = null;
         if(currentToken().type.equals(TokenType.LEFT_PAREN)){
             MatchAndConsume(TokenType.LEFT_PAREN);
@@ -130,7 +127,7 @@ public class Parser {
         } else if (isKeyWord()){
             res = ConsumeVariable();
         } else{
-            System.out.println("Error: NUMBER or LEFT_PAREN expected or some shit: "+currentToken().type.name()); //aqui ir agregando conforme se agregan tipos de datos
+            System.out.println("Error: NUMBER, STRING, LEFT_PAREN, or VARIABLE expected, but got: "+currentToken().type.name());
             System.exit(0);
         }
         return res;
@@ -148,25 +145,22 @@ public class Parser {
     
     public Node multiply() {
         MatchAndConsume(TokenType.MULTIPLY);
-        //return getFactor(); 
         return getExponentiation(); 
     }
     
     public Node divide() {
         MatchAndConsume(TokenType.DIVIDE);
-        //return getFactor(); 
         return getExponentiation(); 
     }
     
     public Node modulus() {
         MatchAndConsume(TokenType.MODULUS);
-        //return getFactor(); 
         return getExponentiation(); 
     }
     
     public Node exponentiation(){
         MatchAndConsume(TokenType.EXPONENTIATION);
-        return getSignedFactor(); //aqui checar que sea o no getFactor
+        return getSignedFactor();
     }
 
     public Node Summation(){
@@ -323,6 +317,10 @@ public class Parser {
         return currentToken().type == TokenType.WHILE; 
     }
     
+    public boolean isFor(){
+        return currentToken().type == TokenType.FOR; 
+    }
+    
     public boolean isIfElse(){
         TokenType type = currentToken().type;
         return type == TokenType.IF || type == TokenType.ELSE; 
@@ -358,11 +356,11 @@ public class Parser {
         return null; 
     }
     
-    public Node Assignment() {
+    public Node Assignment(){
         Node node = null;
         String name = MatchAndConsume(TokenType.KEYWORD).text; 
         if (name.equals("pi")||name.equals("e")) {
-            Util.println("Error: pi and e are constants, a value can't be assigned.");
+            Util.println("Error: pi and e are constants, can't assign value.");
             System.exit(0);
         }
         MatchAndConsume(TokenType.ASSIGNMENT);
@@ -377,6 +375,20 @@ public class Parser {
         Node body = getBlock();
         return new WhileNode(condition, body); 
     }
+    
+    public Node For(){
+        MatchAndConsume(TokenType.FOR);
+        Node variable = Assignment();
+        MatchAndConsume(TokenType.COMMA);
+        Node condition = Expression();
+        MatchAndConsume(TokenType.COMMA);
+        String name = MatchAndConsume(TokenType.KEYWORD).text;
+        MatchAndConsume(TokenType.ASSIGNMENT);
+        Node operation = Expression();
+        Node action = new ActionNode(name, operation, this);
+        Node body = getBlock();
+        return new ForNode(variable, condition, action, body);
+    }    
     
     public Node If() {
         Node condition=null, then=null, else_=null;
@@ -452,8 +464,6 @@ public class Parser {
         symbol_table = savedSymbolTable; 
         return ret;
     }
-
-           
             
     public Node Statement(){
         Node node = null;
@@ -464,9 +474,11 @@ public class Parser {
             node = While();
         } else if(isIfElse()){
             node = If(); 
-        } else if (isFunction()) {
+        } else if (isFunction()){
             node = Function();
-        }else if (type == TokenType.PRINT){
+        } else if (isFor()){
+            node = For();
+        } else if (type == TokenType.PRINT){
             MatchAndConsume(TokenType.PRINT);
             node = new PrintNode(Expression(), "sameline"); 
         } else if (type == TokenType.PRINTLN){
@@ -476,7 +488,7 @@ public class Parser {
             MatchAndConsume(TokenType.WAIT);
             node = new WaitNode(Expression()); 
         } else {
-            Util.println("Error: unknown language construct: "+ currentToken().text);
+            Util.println("Error: unknown language construct \""+ currentToken().text+"\".");
             System.exit(0);
         }
         return node; 
