@@ -31,7 +31,7 @@ public class Tokenizer {
         pos++;
     }
     
-    public boolean isOperation(char chr) {
+    public boolean isOperation(char chr){
         boolean addOperation = chr == '+' || chr == '-'; 
         boolean multOperation = chr == '*' || chr == '/' || chr == '^' || chr == '%';
         boolean compOperation = chr == '<' || chr == '>' || chr == '='; 
@@ -39,10 +39,27 @@ public class Tokenizer {
         return addOperation || multOperation || compOperation || logicOperation; 
     }
     
-    public boolean isParen(char chr) {
+    public boolean isParen(char chr){
         boolean parenOperation = chr == '(' || chr == ')';
-        return parenOperation;
+        //boolean comma = chr == ',';//aqui no estoy seguro
+        return parenOperation /*|| comma*/;
     }
+    
+    public boolean isPunctuation(char chr) {
+        boolean puncOp = chr == ',';
+        return puncOp; 
+    }
+    
+    public TokenType getPunctuationType(char firstOperator) {
+        TokenType type = TokenType.UNKNOWN; 
+        switch(firstOperator){
+            case ',':
+                type = TokenType.COMMA;
+                break; 
+        }
+        return type; 
+    }
+
     
     public TokenType getParenType(char chr) {
         TokenType type = TokenType.UNKNOWN; 
@@ -53,6 +70,9 @@ public class Tokenizer {
             case ')':
                 type = TokenType.RIGHT_PAREN; 
                 break;
+            /*case ',':
+                type = TokenType.COMMA;
+                break;*/
         }
         return type; 
     }
@@ -136,6 +156,9 @@ public class Tokenizer {
                     } else if (Character.isLetter(chr)){
                         tokenstr += chr;
                         state = TokenizeState.KEYWORD;
+                    } else if (isPunctuation(chr)){
+                        TokenType puncType = getPunctuationType(chr);
+                        tokens.add(new Token(Character.toString(chr), puncType)); 
                     }
                     break;
                 case NUMBER:
@@ -203,7 +226,16 @@ public class Tokenizer {
                 break;
             case "while":
                 type = TokenType.WHILE;
-            break;
+                break;
+            case "if":
+                type = TokenType.IF;
+                break;
+            case "else":
+                type = TokenType.ELSE;
+                break;
+            case "function":
+                type = TokenType.FUNCTION;
+                break;
             case "print":
                 type = TokenType.PRINT;
                 break;

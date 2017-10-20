@@ -1,4 +1,2 @@
 start
-    pi = 3
-    println pi 
 end

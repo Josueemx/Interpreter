@@ -5,6 +5,7 @@
  */
 package com.interpreter.classes;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -313,18 +314,35 @@ public class Parser {
         return currentToken().type == TokenType.KEYWORD; 
     }
     
-    public boolean isAssignment() {
+    public boolean isAssignment(){
         TokenType type = currentToken().type; 
         return type == TokenType.KEYWORD && nextToken().type == TokenType.ASSIGNMENT;
     }
     
-    public boolean isWhile() {
+    public boolean isWhile(){
         return currentToken().type == TokenType.WHILE; 
     }
     
+    public boolean isIfElse(){
+        TokenType type = currentToken().type;
+        return type == TokenType.IF || type == TokenType.ELSE; 
+    }
+    
+    public boolean isFunction(){
+        TokenType type = currentToken().type;
+        return type == TokenType.FUNCTION && nextToken().type == TokenType.KEYWORD; 
+    }
+    
     public Node ConsumeVariable(){//= Variable
-        Token token = MatchAndConsume(TokenType.KEYWORD); 
-        Node node = new VariableNode(token.text, this);
+        Node node = null;
+        if(nextToken().type == TokenType.LEFT_PAREN) {
+            node = functionCall();
+        }
+        else{
+            Token token = MatchAndConsume(TokenType.KEYWORD); 
+            node = new VariableNode(token.text, this);
+            return node;
+        }
         return node; 
     }
     
@@ -343,6 +361,10 @@ public class Parser {
     public Node Assignment() {
         Node node = null;
         String name = MatchAndConsume(TokenType.KEYWORD).text; 
+        if (name.equals("pi")||name.equals("e")) {
+            Util.println("Error: pi and e are constants, a value can't be assigned.");
+            System.exit(0);
+        }
         MatchAndConsume(TokenType.ASSIGNMENT);
         Node value = Expression();
         node = new AssignmentNode(name, value, this);
@@ -355,15 +377,96 @@ public class Parser {
         Node body = getBlock();
         return new WhileNode(condition, body); 
     }
+    
+    public Node If() {
+        Node condition=null, then=null, else_=null;
+        MatchAndConsume(TokenType.IF);
+        condition = Expression();
+        then = getBlock();
+        if (currentToken().type == TokenType.ELSE){
+            MatchAndConsume(TokenType.ELSE);
+            if (currentToken().type == TokenType.IF) 
+                else_ = If(); 
+            else 
+                else_ = getBlock();
+        }
+        return new IfNode(condition, then, else_); 
+    }
+    
+    public Node Function() {
+        MatchAndConsume(TokenType.FUNCTION);
+        String functionName = MatchAndConsume(TokenType.KEYWORD).text;
+        MatchAndConsume(TokenType.LEFT_PAREN);
+        List<Parameter> parameters = functionDefParameters();
+        MatchAndConsume(TokenType.RIGHT_PAREN);
+        Node functionBody = getBlock();
+        Function function = new Function(functionName, functionBody, parameters); 
+        Node functionVariable = new AssignmentNode(functionName, function, this);
+        return functionVariable; 
+    }
+    
+    public List functionDefParameters() {
+        List<Parameter> parameters = null;
+        if (currentToken().type == TokenType.KEYWORD) {
+            parameters = new ArrayList();
+            parameters.add(new Parameter(MatchAndConsume(TokenType.KEYWORD).text));
+            while (currentToken().type == TokenType.COMMA) {
+                MatchAndConsume(TokenType.COMMA);
+                parameters.add(new Parameter(MatchAndConsume(TokenType.KEYWORD).text)); 
+            }
+        }
+        return parameters; 
+    }
+    
+    public Node functionCall() {
+        String function_name = MatchAndConsume(TokenType.KEYWORD).text;
+        Node calleeFunctionName = new VariableNode(function_name, this); 
+        MatchAndConsume(TokenType.LEFT_PAREN);
+        List<Parameter> actualParameters = functionCallParameters(); 
+        MatchAndConsume(TokenType.RIGHT_PAREN);
+        Node functionCallNode = new FunctionCallNode(calleeFunctionName, actualParameters, this);
+        return functionCallNode; 
+    }
+    
+    public List functionCallParameters() {
+        List<Parameter> actualParameters = null; 
+        Node expression = Expression();
+        if (expression != null){
+            actualParameters = new ArrayList(); 
+            actualParameters.add(new Parameter(expression)); 
+            while (currentToken().type == TokenType.COMMA) {
+                MatchAndConsume(TokenType.COMMA);
+                actualParameters.add(new Parameter(Expression())); 
+            }
+        }
+        return actualParameters; 
+    }
+    
+    public Object ExecuteFunction(Function function, List boundParameters){
+        Map<String, Object> savedSymbolTable = new HashMap<String, Object>(symbol_table);
+        for(int i = 0; i < boundParameters.size(); i++){
+            BoundParameter param = (BoundParameter) boundParameters.get(i);
+            setVariable(param.getName(), param.getValue());
+        }
+        Object ret = function.eval();
+        symbol_table = savedSymbolTable; 
+        return ret;
+    }
 
+           
+            
     public Node Statement(){
         Node node = null;
         TokenType type = currentToken().type;
         if(isAssignment()){
             node = Assignment();
-        } else if (isWhile()){
+        } else if(isWhile()){
             node = While();
-        } else if (type == TokenType.PRINT){
+        } else if(isIfElse()){
+            node = If(); 
+        } else if (isFunction()) {
+            node = Function();
+        }else if (type == TokenType.PRINT){
             MatchAndConsume(TokenType.PRINT);
             node = new PrintNode(Expression(), "sameline"); 
         } else if (type == TokenType.PRINTLN){

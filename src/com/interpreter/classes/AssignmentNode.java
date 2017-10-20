@@ -25,7 +25,10 @@ public class AssignmentNode extends Node {
     }
     
     public Object eval() {
-        return parser.setVariable(name, value.eval()); 
+        if (value instanceof Function)
+            return parser.setVariable(name, value);
+        else
+            return parser.setVariable(name, value.eval());
     }
 }
     

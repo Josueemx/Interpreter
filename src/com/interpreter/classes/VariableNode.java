@@ -24,7 +24,7 @@ public class VariableNode extends Node {
     public Object eval() {
         Object value = parser.getVariable(variable_name);
         if (value == null) {
-            Util.println("Error: undefined variable \"" + variable_name+"\"");
+            Util.println("Error: undefined variable \"" + variable_name+"\".");
             System.exit(1);
         }
         return value; 
