@@ -1,2 +1,18 @@
 start
+    println ""
+    function m()
+        wait 3000
+        res = 0
+    end
+    for i = 0, i<5, i=i+1
+        print i
+        print ","
+    end
+    a = 2<4
+    if a
+        println "es menor"
+    end
+    else
+        println "es mayor"
+    end
 end

@@ -126,34 +126,31 @@ public class Parser {
             res = new StringNode(new String(token.text)); 
         } else if (isKeyWord()){
             res = ConsumeVariable();
-        } else{
-            System.out.println("Error: NUMBER, STRING, LEFT_PAREN, or VARIABLE expected, but got: "+currentToken().type.name());
-            System.exit(0);
         }
         return res;
     }
     
-    public Node add() {
+    public Node add(){
         MatchAndConsume(TokenType.ADD);
         return getTerm(); 
     }
     
-    public Node subtract() {
+    public Node subtract(){
         MatchAndConsume(TokenType.SUBTRACT);
         return getTerm(); 
     }
     
-    public Node multiply() {
+    public Node multiply(){
         MatchAndConsume(TokenType.MULTIPLY);
         return getExponentiation(); 
     }
     
-    public Node divide() {
+    public Node divide(){
         MatchAndConsume(TokenType.DIVIDE);
         return getExponentiation(); 
     }
     
-    public Node modulus() {
+    public Node modulus(){
         MatchAndConsume(TokenType.MODULUS);
         return getExponentiation(); 
     }
@@ -275,7 +272,7 @@ public class Parser {
     }
     
     public boolean isMultiplicationOperation(TokenType type){
-        return type == TokenType.MULTIPLY || type == TokenType.DIVIDE || type == TokenType.MODULUS ;//|| type == TokenType.EXPONENTIATION 
+        return type == TokenType.MULTIPLY || type == TokenType.DIVIDE || type == TokenType.MODULUS;
     }
     
     public boolean isAddOperation(TokenType type){
@@ -326,10 +323,15 @@ public class Parser {
         return type == TokenType.IF || type == TokenType.ELSE; 
     }
     
-    public boolean isFunction(){
+    public boolean isFunctionDefinition(){
         TokenType type = currentToken().type;
         return type == TokenType.FUNCTION && nextToken().type == TokenType.KEYWORD; 
     }
+    
+     public boolean isFunctionCall(){
+        TokenType type = currentToken().type;
+        return type == TokenType.KEYWORD && nextToken().type == TokenType.LEFT_PAREN;
+    } 
     
     public Node ConsumeVariable(){//= Variable
         Node node = null;
@@ -360,7 +362,7 @@ public class Parser {
         Node node = null;
         String name = MatchAndConsume(TokenType.KEYWORD).text; 
         if (name.equals("pi")||name.equals("e")) {
-            Util.println("Error: pi and e are constants, can't assign value.");
+            Util.println("Error: pi and e are constants and can't assign value.");
             System.exit(0);
         }
         MatchAndConsume(TokenType.ASSIGNMENT);
@@ -370,9 +372,10 @@ public class Parser {
     }
     
     public Node While() {
+        Node body, condition;
         MatchAndConsume(TokenType.WHILE);
-        Node condition = Expression();
-        Node body = getBlock();
+        condition = Expression();
+        body = getBlock();
         return new WhileNode(condition, body); 
     }
     
@@ -390,7 +393,7 @@ public class Parser {
         return new ForNode(variable, condition, action, body);
     }    
     
-    public Node If() {
+    public Node If(){
         Node condition=null, then=null, else_=null;
         MatchAndConsume(TokenType.IF);
         condition = Expression();
@@ -405,7 +408,7 @@ public class Parser {
         return new IfNode(condition, then, else_); 
     }
     
-    public Node Function() {
+    public Node Function(){
         MatchAndConsume(TokenType.FUNCTION);
         String functionName = MatchAndConsume(TokenType.KEYWORD).text;
         MatchAndConsume(TokenType.LEFT_PAREN);
@@ -417,7 +420,7 @@ public class Parser {
         return functionVariable; 
     }
     
-    public List functionDefParameters() {
+    public List functionDefParameters(){
         List<Parameter> parameters = null;
         if (currentToken().type == TokenType.KEYWORD) {
             parameters = new ArrayList();
@@ -430,7 +433,7 @@ public class Parser {
         return parameters; 
     }
     
-    public Node functionCall() {
+    public Node functionCall(){
         String function_name = MatchAndConsume(TokenType.KEYWORD).text;
         Node calleeFunctionName = new VariableNode(function_name, this); 
         MatchAndConsume(TokenType.LEFT_PAREN);
@@ -441,17 +444,17 @@ public class Parser {
     }
     
     public List functionCallParameters() {
-        List<Parameter> actualParameters = null; 
+        List<Parameter> actualParameters = null;
         Node expression = Expression();
         if (expression != null){
-            actualParameters = new ArrayList(); 
+            actualParameters = new ArrayList();
             actualParameters.add(new Parameter(expression)); 
             while (currentToken().type == TokenType.COMMA) {
                 MatchAndConsume(TokenType.COMMA);
                 actualParameters.add(new Parameter(Expression())); 
             }
         }
-        return actualParameters; 
+        return actualParameters;
     }
     
     public Object ExecuteFunction(Function function, List boundParameters){
@@ -474,8 +477,10 @@ public class Parser {
             node = While();
         } else if(isIfElse()){
             node = If(); 
-        } else if (isFunction()){
+        } else if (isFunctionDefinition()){
             node = Function();
+        } else if (isFunctionCall()){
+            node = functionCall();
         } else if (isFor()){
             node = For();
         } else if (type == TokenType.PRINT){

@@ -11,4 +11,11 @@ package com.interpreter.classes;
  */
 public class Validator {
     
+    public static void validate(Node node, String message){
+        if(node == null){
+            System.out.println(message);
+            System.exit(0);
+        }
+    }
+    
 }

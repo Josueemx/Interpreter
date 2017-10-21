@@ -23,22 +23,26 @@ import java.util.List;
 public class Interpreter {
     
     public static void main(String[] args) {
+        try {
+            boolean debug = false;
         
-        boolean debug = false;
-        
-        if(args.length < 1){ 
-            Util.println("Usage: Demo <script>"); 
-            return; 
+            if(args.length < 1){ 
+                Util.println("Usage: Demo <script>"); 
+                return; 
+            }
+
+            if(args.length > 1){ 
+                if (args[1].equals("debug")) 
+                    debug = true; 
+            }        
+
+            Interpreter interpreter = new Interpreter();
+            String source_code = interpreter.ReadFile(args[0]);
+            interpreter.interpret(source_code, debug);
+        } catch (Exception e) {
+            System.out.println("Error: there was an error parsing an expression.");
+            System.exit(0);
         }
-        
-        if(args.length > 1){ 
-            if (args[1].equals("debug")) 
-                debug = true; 
-        }        
-        
-        Interpreter interpreter = new Interpreter();
-        String source_code = interpreter.ReadFile(args[0]);
-        interpreter.interpret(source_code, debug);
     }
     
     public void interpret(String source, boolean debug){
